@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Secure Go Template API
+  description: A secure and production-ready HTTP API server demonstrating slog masking, Bearer auth, and ent SQLite database.
+  version: 1.0.0
+paths:
+  /login:
+    post:
+      summary: User login
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Invalid request payload
+        '401':
+          description: Authentication failed
+
+  /users/me:
+    get:
+      summary: Get current authenticated user
+      operationId: getMe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  username:
+                    type: string
+        '401':
+          description: Unauthorized
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
