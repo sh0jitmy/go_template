@@ -40,7 +40,7 @@ Goの設計・実装ベストプラクティス（`golang-design`, `golang-imple
 | 対象ファイル | 改善内容と効果 | 関連スキル & ルール | 判定 | レビュアーの判定理由・妥当性コメント |
 | :--- | :--- | :--- | :--- | :--- |
 | `cmd/app/main.go` | ・エントリーポイント（`main.go`）のみを配置。<br>・ビジネスロジックやハンドラー記述を完全に排除し、`cli.App` による引数パース、DIの初期化、起動処理のみを担当。 | [golang-design:1] | **PASS** | `main.go` の肥大化が解消され、ビジネスロジックやハンドラー記述が `internal/` 配下へ綺麗にカプセル化されているため、Go のディレクトリ Layout Conventions に適合します。 |
-| `internal/api/` | ・OpenAPI からの自動生成コード（`api.gen.go`）とハンドラーの実装 (`handler.go`)、および Gin エンジンの構成 (`server.go`) に分割。 | [golang-design:1]<br>[golang-design:2] | **PASS** | Web API 関連の関心事が綺麗に切り出されており、呼び出し元とハンドラーの結合度が最小限に抑えられているため適合と判定します。 |
+| `internal/api/` | ・OpenAPI からの自動生成コード（`ogen/api.gen.go`）を独立パッケージ `ogen` に分離し、ハンドラーの実装 (`handler.go`)、および Gin エンジンの構成 (`server.go`) は `internal/api` に配置。 | [golang-design:1]<br>[golang-design:2] | **PASS** | Web API 関連の関心事が綺麗に切り出されており、生成コードと手書きコードが分離されているため適合と判定します。 |
 
 ---
 

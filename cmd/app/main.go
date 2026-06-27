@@ -17,7 +17,7 @@
 // Package main is the entry point of the Go template application.
 // It initializes dependencies and runs the HTTP/HTTPS API server.
 //
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.7.1 --config=../../api/oapi-codegen.cfg.yaml -o ../../internal/api/api.gen.go ../../api/openapi.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.7.1 --config=../../api/oapi-codegen.cfg.yaml -o ../../ogen/api.gen.go ../../api/openapi.yaml
 //go:generate go run -mod=mod entgo.io/ent/cmd/ent@v0.14.6 generate ../../ent/schema
 package main
 
@@ -147,11 +147,11 @@ func runServer(ctx context.Context, c *cli.Context) error {
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		if err := tp.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("Failed to shutdown OTel TracerProvider", "error", err)
+		if shutdownErr := tp.Shutdown(shutdownCtx); shutdownErr != nil {
+			slog.Warn("Failed to shutdown OTel TracerProvider", "error", shutdownErr)
 		}
-		if err := mp.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("Failed to shutdown OTel MeterProvider", "error", err)
+		if shutdownErr := mp.Shutdown(shutdownCtx); shutdownErr != nil {
+			slog.Warn("Failed to shutdown OTel MeterProvider", "error", shutdownErr)
 		}
 	}()
 
@@ -159,8 +159,8 @@ func runServer(ctx context.Context, c *cli.Context) error {
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		if err := pprofSrv.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("Failed to shutdown pprof server", "error", err)
+		if shutdownErr := pprofSrv.Shutdown(shutdownCtx); shutdownErr != nil {
+			slog.Warn("Failed to shutdown pprof server", "error", shutdownErr)
 		}
 	}()
 

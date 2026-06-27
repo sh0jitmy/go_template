@@ -22,7 +22,7 @@ LICENSE_HEADER = """// Copyright 2026 [Copyright Holder]
 def get_go_files():
     go_files = []
     # 除外ディレクトリ
-    exclude_dirs = {'.git', '.github', '.claude', 'dist', 'bin', 'vendor'}
+    exclude_dirs = {'.git', '.github', '.claude', 'dist', 'bin', 'vendor', 'ent', 'ogen'}
     
     for root, dirs, files in os.walk('.'):
         # 除外設定
