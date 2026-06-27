@@ -1,7 +1,7 @@
 # oapi-codegen configuration file
 # For details, see: https://github.com/oapi-codegen/oapi-codegen
 
-package: api
+package: ogen
 generate:
   gin-server: true
   models: true
