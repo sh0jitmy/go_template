@@ -147,11 +147,11 @@ func runServer(ctx context.Context, c *cli.Context) error {
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		if err := tp.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("Failed to shutdown OTel TracerProvider", "error", err)
+		if shutdownErr := tp.Shutdown(shutdownCtx); shutdownErr != nil {
+			slog.Warn("Failed to shutdown OTel TracerProvider", "error", shutdownErr)
 		}
-		if err := mp.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("Failed to shutdown OTel MeterProvider", "error", err)
+		if shutdownErr := mp.Shutdown(shutdownCtx); shutdownErr != nil {
+			slog.Warn("Failed to shutdown OTel MeterProvider", "error", shutdownErr)
 		}
 	}()
 
@@ -159,8 +159,8 @@ func runServer(ctx context.Context, c *cli.Context) error {
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		if err := pprofSrv.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("Failed to shutdown pprof server", "error", err)
+		if shutdownErr := pprofSrv.Shutdown(shutdownCtx); shutdownErr != nil {
+			slog.Warn("Failed to shutdown pprof server", "error", shutdownErr)
 		}
 	}()
 
