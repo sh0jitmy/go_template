@@ -31,7 +31,7 @@
    - ルート直下の肥大化を防ぐため、`cmd/app/`（エントリーポイント）と `internal/`（APIハンドラー、ミドルウェア、データベース）にコードを完全に分離・カプセル化。
 
 2. **OpenAPI (Schema-First) 駆動による自動コード生成**
-   - API 仕様を `api/openapi.yaml` に定義し、`oapi-codegen` を用いて Gin 用のルーターインターフェースとデータモデルを `internal/api/api.gen.go` へ自動生成。
+   - API 仕様を `api/openapi.yaml` に定義し、`oapi-codegen` を用いて Gin 用のルーターインターフェースとデータモデルを `ogen/api.gen.go` へ自動生成。生成コードは独立した `ogen` パッケージとして管理し、ライセンスヘッダーチェックの対象外とする。
 
 3. **ent ORM と CGO-free SQLite によるデータベース層**
    - `ent` スキーマを元に型安全な ORM コードを自動生成。
