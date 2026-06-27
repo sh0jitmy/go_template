@@ -39,7 +39,7 @@ func SetupEngine(db *ent.Client) *gin.Engine {
 	// メトリクススクレイプ用エンドポイント（Prometheus形式でエクスポート）
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	// 手動マッピング（OpenAPI自動生成された ServerInterface 実装のバインド）
+	// 手動マッピング（OpenAPI自動生成された ogen.ServerInterface 実装のバインド）
 	r.POST("/login", func(c *gin.Context) {
 		s.Login(c)
 	})

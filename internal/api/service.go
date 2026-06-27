@@ -23,10 +23,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shjtmy/go_sh0jitmy_template/ent"
 	"github.com/shjtmy/go_sh0jitmy_template/ent/user"
+	"github.com/shjtmy/go_sh0jitmy_template/ogen"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Server は OpenAPI の ServerInterface を実装する構造体です。
+// Server は OpenAPI の ogen.ServerInterface を実装する構造体です。
+// コンパイル時にインターフェース準拠を保証します。
+var _ ogen.ServerInterface = (*Server)(nil)
+
 type Server struct {
 	db *ent.Client
 }
