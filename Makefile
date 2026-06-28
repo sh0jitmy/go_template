@@ -1,10 +1,11 @@
 # Makefile for Go Development & Custom Skills Management
 
-.PHONY: help check install self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean
+.PHONY: help check install self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint
 
 help:
 	@echo "Available commands:"
 	@echo "  Go Development:"
+	@echo "    openapi-lint     Validate OpenAPI spec with Spectral"
 	@echo "    generate         Generate OpenAPI and ent entity code"
 	@echo "    fmt              Format Go source files"
 	@echo "    lint             Run golangci-lint static analysis"
@@ -27,7 +28,18 @@ help:
 
 # --- Go Development ---
 
-generate:
+openapi-lint:
+	@echo "==> Running Spectral lint on OpenAPI spec..."
+	@if command -v spectral >/dev/null 2>&1; then \
+		spectral lint api/openapi.yaml; \
+	elif command -v npx >/dev/null 2>&1; then \
+		npx -y @stoplight/spectral-cli lint api/openapi.yaml; \
+	else \
+		echo "Spectral CLI is not installed and npx is not available. Please install it."; \
+		exit 1; \
+	fi
+
+generate: openapi-lint
 	@echo "==> Generating code from schema..."
 	@go generate ./...
 

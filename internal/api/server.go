@@ -40,11 +40,11 @@ func SetupEngine(db *ent.Client) *gin.Engine {
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// 手動マッピング（OpenAPI自動生成された ogen.ServerInterface 実装のバインド）
-	r.POST("/login", func(c *gin.Context) {
+	r.POST("/v1/login", func(c *gin.Context) {
 		s.Login(c)
 	})
 
-	authorized := r.Group("/")
+	authorized := r.Group("/v1")
 	authorized.Use(BearerAuthMiddleware("secret-bearer-token"))
 	authorized.GET("/users/me", func(c *gin.Context) {
 		s.GetMe(c)

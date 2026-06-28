@@ -123,7 +123,7 @@ func TestE2E_AppAPI(t *testing.T) {
 			"password": "wrong-password",
 		}
 		body, _ := json.Marshal(payload)
-		req, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+		req, _ := http.NewRequest(http.MethodPost, "/v1/login", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -146,7 +146,7 @@ func TestE2E_AppAPI(t *testing.T) {
 			"password": "seed-password",
 		}
 		body, _ := json.Marshal(payload)
-		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, "/login", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, "/v1/login", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()
@@ -190,9 +190,9 @@ func TestE2E_AppAPI(t *testing.T) {
 		assert.True(t, foundAudit, "Audit log not found in log output")
 	}
 
-	// 6. Bearer 認証なしでの /users/me アクセス (401エラー)
+	// 6. Bearer 認証なしでの /v1/users/me アクセス (401エラー)
 	{
-		req, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+		req, _ := http.NewRequest(http.MethodGet, "/v1/users/me", nil)
 
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
@@ -200,9 +200,9 @@ func TestE2E_AppAPI(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	}
 
-	// 7. 不正な Bearer トークンでの /users/me アクセス (401エラー)
+	// 7. 不正な Bearer トークンでの /v1/users/me アクセス (401エラー)
 	{
-		req, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+		req, _ := http.NewRequest(http.MethodGet, "/v1/users/me", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token-value")
 
 		w := httptest.NewRecorder()
@@ -211,9 +211,9 @@ func TestE2E_AppAPI(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	}
 
-	// 8. 正しい Bearer トークンでの /users/me アクセス (200成功)
+	// 8. 正しい Bearer トークンでの /v1/users/me アクセス (200成功)
 	{
-		req, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+		req, _ := http.NewRequest(http.MethodGet, "/v1/users/me", nil)
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
 
 		w := httptest.NewRecorder()
