@@ -20,17 +20,20 @@ import (
 	"context"
 	"testing"
 
-	_ "github.com/shjtmy/go_sh0jitmy_template/internal/database"
 	"github.com/shjtmy/go_sh0jitmy_template/ent/enttest"
+	_ "github.com/shjtmy/go_sh0jitmy_template/internal/database"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAuthService_Authenticate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
-	// インメモリ SQLite クライアントの作成 (internal/database の init() により sqlite3 が CGO-free ドライバとして登録されています)
-	client := enttest.Open(t, "sqlite3", "file:enttest?mode=memory&cache=shared&_pragma=foreign_keys(1)")
-	defer client.Close()
+	// テストごとに一意のメモリキャッシュ識別名（enttest_auth）を使用し、並行テスト間の干渉を防ぎます
+	client := enttest.Open(t, "sqlite3", "file:enttest_auth?mode=memory&cache=shared&_pragma=foreign_keys(1)")
+	t.Cleanup(func() {
+		_ = client.Close()
+	})
 
 	// テスト用パスワードのハッシュ化とユーザーの投入
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("correct-password"), bcrypt.DefaultCost)
@@ -50,6 +53,7 @@ func TestAuthService_Authenticate(t *testing.T) {
 
 	// ケース1: 正常に認証成功
 	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
 		token, err := svc.Authenticate(ctx, "testuser", "correct-password")
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -61,6 +65,7 @@ func TestAuthService_Authenticate(t *testing.T) {
 
 	// ケース2: 存在しないユーザー名での認証失敗
 	t.Run("UserNotFound", func(t *testing.T) {
+		t.Parallel()
 		token, err := svc.Authenticate(ctx, "nonexistent", "correct-password")
 		if err != ErrAuthenticationFailed {
 			t.Errorf("expected ErrAuthenticationFailed, got %v", err)
@@ -72,6 +77,7 @@ func TestAuthService_Authenticate(t *testing.T) {
 
 	// ケース3: パスワード不一致での認証失敗
 	t.Run("PasswordMismatch", func(t *testing.T) {
+		t.Parallel()
 		token, err := svc.Authenticate(ctx, "testuser", "wrong-password")
 		if err != ErrAuthenticationFailed {
 			t.Errorf("expected ErrAuthenticationFailed, got %v", err)
@@ -83,10 +89,14 @@ func TestAuthService_Authenticate(t *testing.T) {
 }
 
 func TestAuthService_GetUserByUsername(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
+	// テストごとに一意のメモリキャッシュ識別名（enttest_me）を使用し、並行テスト間の干渉を防ぎます
 	client := enttest.Open(t, "sqlite3", "file:enttest_me?mode=memory&cache=shared&_pragma=foreign_keys(1)")
-	defer client.Close()
+	t.Cleanup(func() {
+		_ = client.Close()
+	})
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	if err != nil {
@@ -105,6 +115,7 @@ func TestAuthService_GetUserByUsername(t *testing.T) {
 
 	// ケース1: ユーザー取得成功
 	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
 		res, err := svc.GetUserByUsername(ctx, "me")
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -116,6 +127,7 @@ func TestAuthService_GetUserByUsername(t *testing.T) {
 
 	// ケース2: ユーザー取得失敗
 	t.Run("NotFound", func(t *testing.T) {
+		t.Parallel()
 		res, err := svc.GetUserByUsername(ctx, "someone")
 		if err != ErrUserNotFound {
 			t.Errorf("expected ErrUserNotFound, got %v", err)
