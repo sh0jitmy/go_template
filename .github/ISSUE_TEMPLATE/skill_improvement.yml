@@ -1,29 +1,41 @@
-name: 💡 スキル不適合・バグ報告 (Skill Bug Report)
-description: スキルの誤動作（反応しない、または誤反応）、誤ったコード提案などの改善提案を行います。
-title: "[BUG/RF]: スキル名 - 短い要約"
-labels: ["bug", "skill-improvement"]
+name: 💡 AI スキル改善提案 (Skill Improvement)
+description: AIエージェント用カスタムスキル (.claude/skills) の誤動作や改善提案を行います。
+title: "[SKILL]: スキル名 - 短い要約"
+labels: ["skill-improvement"]
 body:
   - type: markdown
     attributes:
       value: |
-        スキルファイルの改善やバグ修正について教えてください。
+        AI エージェント用カスタムスキルの改善やバグ修正について教えてください。
+
   - type: dropdown
     id: skill-name
     attributes:
       label: 🎯 対象のスキル名
-      description: 修正が必要なカスタム指示（Skill）を選択してください。
+      description: 修正が必要なカスタムスキルを選択してください。
       options:
-        - database-design
-        - sre-deployment
         - agent-skill-evaluator
+        - ai-skill-engineering
+        - database-design
+        - evidence-governance
+        - git-strategy
+        - github-copilot-review
         - golang-design
+        - golang-e2e-testing
         - golang-implementation
         - golang-observability
-        - golang-e2e-testing
+        - marketing-strategy
+        - network-design
+        - product-management
+        - quality-inspector
+        - sakuracloud-solution-architect
+        - software-architecture
+        - sre-deployment
     validations:
       required: true
+
   - type: dropdown
-    id: bug-type
+    id: issue-type
     attributes:
       label: 🚨 問題の種類
       description: どのような不適合が発生しましたか？
@@ -32,8 +44,10 @@ body:
         - "Over-triggering (無関係な会話でスキルが誤ってロードされた)"
         - "Incorrect/Bad Advice (スキルが誤った設計・実装を提案した)"
         - "Missing Rule (不足している重要なプラクティスがある)"
+        - "Outdated (スキルの内容が現在のコードベースと乖離している)"
     validations:
       required: true
+
   - type: textarea
     id: description
     attributes:
@@ -44,20 +58,22 @@ body:
         発生した挙動: エージェントがクローズ漏れのあるチャネルコードを提案した。
     validations:
       required: true
+
   - type: textarea
     id: expected-behavior
     attributes:
       label: 💡 期待される挙動 / あるべき指針
       description: 本来、スキルがどのようにエージェントを誘導すべきだったかを記述してください。
       placeholder: |
-        期待される挙動: チャネルの所有者がクローズすることを明記し、goleak等を用いたテスト作成を促すべき。
+        期待される挙動: チャネルの所有者がクローズすることを明記し、goleak 等を用いたテスト作成を促すべき。
     validations:
       required: true
+
   - type: textarea
-    id: proposed-eval-test
+    id: proposed-fix
     attributes:
-      label: 🧪 評価用アサーション (Evals定義案)
-      description: この問題を検知するための評価（Evals）のインプットプロンプトとアサーション（判定KW）の案があれば教えてください。
-      placeholder: |
-        Prompt: 「〜の処理を並行化して」
-        Assertions: "channel close", "goleak", "close"
+      label: 🔧 修正案
+      description: スキルファイルへの具体的な追加・修正案があれば記載してください。
+      render: markdown
+    validations:
+      required: false
