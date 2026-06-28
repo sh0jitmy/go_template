@@ -2,13 +2,8 @@
 # For details, see: https://github.com/Songmu/tagpr
 
 [tagpr]
-# Release branch (default: default branch, usually main)
-releaseBranch = main
-
-# Tag prefix (default: v)
-tagPrefix = v
-
-# Name of the template release PR
-template = Release {{.Version}}
 	vPrefix = true
+	releaseBranch = main
 	versionFile = version.go
+	majorLabels = major
+	minorLabels = minor
