@@ -63,8 +63,7 @@ vulncheck:
 	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
 test: generate
-	@echo "==> Running Go tests..."
-	@go test -v -race -cover ./...
+	@bash scripts/check_coverage.sh
 
 build: generate
 	@echo "==> Building binary..."
