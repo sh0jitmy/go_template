@@ -32,7 +32,7 @@ body:
       label: 📦 影響コンポーネント
       description: バグが発生しているコンポーネントを選択してください。
       options:
-        - "API (internal/api)"
+        - "API / HTTP (internal/web)"
         - "データベース (ent / internal/database)"
         - "OpenAPI 生成コード (ogen)"
         - "Terraform / IaC (terraform)"

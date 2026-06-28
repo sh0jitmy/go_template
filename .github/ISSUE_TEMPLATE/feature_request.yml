@@ -35,7 +35,7 @@ body:
       label: 📦 影響範囲
       description: この提案が影響するカテゴリを選択してください。
       options:
-        - label: "API (gin / ogen / OpenAPI)"
+        - label: "API / HTTP (internal/web)"
         - label: "データベース (ent / Atlas マイグレーション)"
         - label: "CLI (urfave/cli)"
         - label: "セキュリティ (認証 / TLS / ACME)"

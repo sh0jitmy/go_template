@@ -14,7 +14,7 @@
 //
 // Author: [YOUR_NAME]
 
-// Package database handles CGO-free sqlite initialization, database connection pools,
+// Package database handles CGO-free sqlite and postgresql initialization, database connection pools,
 // schemas, automatic migrations, and data seeding using ent.
 package database
 
@@ -26,6 +26,7 @@ import (
 
 	entsql "entgo.io/ent/dialect/sql"
 	sqlite "github.com/glebarez/go-sqlite"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/shjtmy/go_sh0jitmy_template/ent"
 	"github.com/shjtmy/go_sh0jitmy_template/ent/user"
 	"golang.org/x/crypto/bcrypt"
@@ -44,20 +45,36 @@ func init() {
 	}
 }
 
-// NewClient は SQLite データベースに接続し、接続プール設定が適用された ent.Client を返します。
-func NewClient(ctx context.Context, dbPath string) (*ent.Client, error) {
-	// DB接続の確立 (CGO-free "sqlite" ドライバーを使用)
-	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?cache=shared&_pragma=foreign_keys(1)", dbPath))
-	if err != nil {
-		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
+// NewClient は指定されたドライバー (sqlite / postgres) と DSN を用いてデータベースに接続し、
+// 接続プール設定および自動マイグレーションが適用された ent.Client を返します。
+func NewClient(ctx context.Context, driver, dsn string) (*ent.Client, error) {
+	var db *sql.DB
+	var err error
+	var dialect string
+
+	switch driver {
+	case "postgres", "pgx":
+		dialect = "postgres"
+		db, err = sql.Open("pgx", dsn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open postgres database: %w", err)
+		}
+	case "sqlite", "sqlite3":
+		dialect = "sqlite3"
+		db, err = sql.Open("sqlite", dsn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open sqlite database: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported database driver: %s", driver)
 	}
 
 	// 接続プールの最適設定 (database-design:2 準拠)
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(0) // インメモリDBやローカルの接続維持のため無制限、または適宜設定
+	db.SetConnMaxLifetime(0) // インメモリDBやローカルの接続維持のため無制限
 
-	drv := entsql.OpenDB("sqlite3", db)
+	drv := entsql.OpenDB(dialect, db)
 	client := ent.NewClient(ent.Driver(drv))
 
 	// 自動マイグレーションの実行

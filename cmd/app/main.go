@@ -28,11 +28,12 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shjtmy/go_sh0jitmy_template/internal/api"
 	"github.com/shjtmy/go_sh0jitmy_template/internal/database"
+	"github.com/shjtmy/go_sh0jitmy_template/internal/web"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/otel"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
@@ -88,7 +89,7 @@ func startSecurePprof() *http.Server {
 }
 
 func main() {
-	handler := api.NewSecureJSONHandler(os.Stdout)
+	handler := web.NewSecureJSONHandler(os.Stdout)
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 
@@ -164,13 +165,20 @@ func runServer(ctx context.Context, c *cli.Context) error {
 		}
 	}()
 
-	dbPath := "ent.db"
+	dbDriver := "sqlite"
+	dbDSN := "ent.db"
+	if os.Getenv("DATABASE_DRIVER") != "" {
+		dbDriver = os.Getenv("DATABASE_DRIVER")
+	}
 	if os.Getenv("DATABASE_URL") != "" {
-		dbPath = os.Getenv("DATABASE_URL")
+		dbDSN = os.Getenv("DATABASE_URL")
+		if strings.HasPrefix(dbDSN, "postgres://") || strings.HasPrefix(dbDSN, "postgresql://") {
+			dbDriver = "postgres"
+		}
 	}
 
 	// 1. データベースクライアントの初期化 (DI)
-	dbClient, err := database.NewClient(ctx, dbPath)
+	dbClient, err := database.NewClient(ctx, dbDriver, dbDSN)
 	if err != nil {
 		return fmt.Errorf("database init failed: %w", err)
 	}
@@ -186,7 +194,7 @@ func runServer(ctx context.Context, c *cli.Context) error {
 	}
 
 	// 3. APIエンジンのセットアップ (DI)
-	r := api.SetupEngine(dbClient)
+	r := web.SetupEngine(dbClient)
 
 	tlsDomain := c.String("tls-domain")
 	tlsCert := c.String("tls-cert")
@@ -206,7 +214,7 @@ func runServer(ctx context.Context, c *cli.Context) error {
 		go func() {
 			slog.Info("Starting HTTP-to-HTTPS redirector...", "port", "80")
 			redirectEngine := gin.New()
-			redirectEngine.Use(api.HTTPSRedirectMiddleware())
+			redirectEngine.Use(web.HTTPSRedirectMiddleware())
 			redirectSrv := &http.Server{
 				Addr:              ":80",
 				Handler:           redirectEngine,
