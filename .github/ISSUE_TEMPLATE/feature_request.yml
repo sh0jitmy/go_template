@@ -40,6 +40,7 @@ body:
         - label: "CLI (urfave/cli)"
         - label: "セキュリティ (認証 / TLS / ACME)"
         - label: "オブザーバビリティ (slog / OTel / Prometheus)"
+        - label: "Terraform / IaC (さくらのクラウド)"
         - label: "CI / CD (GitHub Actions / GoReleaser / tagpr)"
         - label: "AI スキル (.claude/skills)"
         - label: "ドキュメント / テンプレート"

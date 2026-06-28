@@ -35,6 +35,7 @@ body:
         - "API (internal/api)"
         - "データベース (ent / internal/database)"
         - "OpenAPI 生成コード (ogen)"
+        - "Terraform / IaC (terraform)"
         - "CI / GitHub Actions"
         - "ビルド / リリース (GoReleaser)"
         - "ライセンスチェック (scripts)"
