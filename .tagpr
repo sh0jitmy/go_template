@@ -10,3 +10,5 @@ tagPrefix = v
 
 # Name of the template release PR
 template = Release {{.Version}}
+	vPrefix = true
+	versionFile = version.go
