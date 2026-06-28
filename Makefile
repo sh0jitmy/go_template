@@ -1,6 +1,6 @@
 # Makefile for Go Development & Custom Skills Management
 
-.PHONY: help check install self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint
+.PHONY: help check install self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint publish-pr ai-pr
 
 help:
 	@echo "Available commands:"
@@ -19,6 +19,8 @@ help:
 	@echo "    license-add      Automatically add license headers to Go files"
 	@echo "    migration-diff   Generate DB migration SQL file with Atlas (requires Atlas CLI)"
 	@echo "                     Usage: make migration-diff name=migration_name"
+	@echo "    publish-pr       Verify formatting/lints/tests, push to origin, and create GitHub PR"
+	@echo "    ai-pr            Trigger AI agent to analyze commits/diffs and create a draft GitHub PR in Japanese"
 	@echo "  Custom Skills Management:"
 	@echo "    check            Validate custom skill frontmatter and syntax"
 	@echo "    install          Install custom skills globally to ~/.claude/skills/"
@@ -101,6 +103,12 @@ migration-diff:
 		--dir "file://ent/migrate/migrations" \
 		--to "ent://ent/schema" \
 		--dev-url "sqlite://dev?mode=memory"
+
+publish-pr:
+	@bash scripts/publish_pr.sh
+
+ai-pr:
+	@claude "github-pr-creator スキルを使用して、現在のブランチの変更とコミットログを分析し、pull_request_template.md に従って日本語のプルリクエストをドラフト（下書き）で作成してください。"
 
 # --- Custom Skills Management ---
 
