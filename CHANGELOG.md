@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.1](https://github.com/sh0jitmy/go_template/compare/v/v0.0.1...v0.0.1) - 2026-06-28
+
+- tagpr: fix label by @sh0jitmy in https://github.com/sh0jitmy/go_template/pull/6
+
 ## [v0.0.1](https://github.com/sh0jitmy/go_template/commits/v/v0.0.1) - 2026-06-27
 
 - add pinact and pinned by @sh0jitmy in https://github.com/sh0jitmy/go_template/pull/1
