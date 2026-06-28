@@ -12,6 +12,7 @@
 - [ ] CLI (urfave/cli)
 - [ ] セキュリティ (認証 / TLS / ACME)
 - [ ] オブザーバビリティ (slog / OTel / Prometheus)
+- [ ] Terraform / IaC (さくらのクラウド)
 - [ ] CI / CD (GitHub Actions / GoReleaser / tagpr)
 - [ ] AI スキル (.claude/skills)
 - [ ] ドキュメント / テンプレート
@@ -28,6 +29,9 @@
 - [ ] `make test` が全テスト PASS で成功することを確認した
 - [ ] `make build` が正常に完了することを確認した
 - [ ] `make license-check` でライセンスヘッダーが適切であることを確認した
+- [ ] OpenAPI 変更時: `make openapi-lint` が正常に通過することを確認した
+- [ ] Terraform 変更時: `terraform fmt -check`, `validate`, `tflint`, `tfsec` を確認した
+- [ ] AI スキル 変更時: `make check` で文法・フロントマターエラーがないことを確認した
 
 ## 🚨 注意事項・懸念点 / Notes & Concerns
 <!-- 破壊的変更、互換性の懸念、パフォーマンスへの影響などがあれば記述してください。 -->

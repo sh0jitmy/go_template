@@ -26,11 +26,15 @@ body:
         - golang-observability
         - marketing-strategy
         - network-design
+        - openapi-design
+        - openapi-design-review
         - product-management
         - quality-inspector
         - sakuracloud-solution-architect
+        - sakuracloud-terraform
         - software-architecture
         - sre-deployment
+        - transaction-profiling-analyzer
     validations:
       required: true
 
