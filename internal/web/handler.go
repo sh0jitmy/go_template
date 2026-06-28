@@ -14,7 +14,7 @@
 //
 // Author: [YOUR_NAME]
 
-package api
+package web
 
 import (
 	"context"

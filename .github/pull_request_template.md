@@ -7,7 +7,7 @@
 
 ## 📦 変更カテゴリ / Change Category
 <!-- 該当するカテゴリにチェックを入れてください。 -->
-- [ ] API (gin / ogen / OpenAPI)
+- [ ] API / HTTP (internal/web)
 - [ ] データベース (ent スキーマ / Atlas マイグレーション)
 - [ ] CLI (urfave/cli)
 - [ ] セキュリティ (認証 / TLS / ACME)

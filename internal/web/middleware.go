@@ -14,9 +14,9 @@
 //
 // Author: [YOUR_NAME]
 
-// Package api implements the Gin Web API layer, custom middleware,
-// and maps request routes to OpenAPI generated handlers.
-package api
+// Package web implements the Gin Web HTTP layer, custom middleware,
+// and maps request routes to OpenAPI handlers.
+package web
 
 import (
 	"fmt"
@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	meter = otel.Meter("github.com/shjtmy/go_sh0jitmy_template/internal/api")
+	meter = otel.Meter("github.com/shjtmy/go_sh0jitmy_template/internal/web")
 
 	// HTTP リクエスト総数カウンター
 	// PromQL: sum(rate(http_requests_total[5m])) by (method, status, path)
