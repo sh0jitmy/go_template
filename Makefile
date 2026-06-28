@@ -31,9 +31,9 @@ help:
 openapi-lint:
 	@echo "==> Running Spectral lint on OpenAPI spec..."
 	@if command -v spectral >/dev/null 2>&1; then \
-		spectral lint api/openapi.yaml; \
+		NODE_OPTIONS="--no-deprecation" spectral lint api/openapi.yaml; \
 	elif command -v npx >/dev/null 2>&1; then \
-		npx -y @stoplight/spectral-cli lint api/openapi.yaml; \
+		NODE_OPTIONS="--no-deprecation" npx -y @stoplight/spectral-cli lint api/openapi.yaml; \
 	else \
 		echo "Spectral CLI is not installed and npx is not available. Please install it."; \
 		exit 1; \
