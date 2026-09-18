@@ -163,7 +163,7 @@ jobs:
           cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@a269c8449c58e578c751aab873133ff8fbe39697 # v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
 
