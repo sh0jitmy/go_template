@@ -13,6 +13,7 @@ a standalone visual HTML test report.
 
 import base64
 import json
+import os
 import shutil
 import subprocess
 import sys
