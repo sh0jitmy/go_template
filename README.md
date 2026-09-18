@@ -1,20 +1,39 @@
 # Go & SRE/DB/Security 開発用 GitHub テンプレートリポジトリ
 
-このリポジトリは、Go (Golang) によるセキュアで高信頼なWebアプリケーション開発を迅速に開始するための、GitHub テンプレートリポジトリです。
-CIでの静的解析、脆弱性診断、自動タグ付け (tagpr)、リリース管理 (GoReleaser) のパイプラインがあらかじめ統合されているほか、AIエージェントの回答品質を向上させるための日本語カスタムスキル（`.claude/skills`）を同梱しています。
+このリポジトリは、Go (Golang) によるセキュアで高信頼なWebアプリケーション・APIサービス開発を迅速に開始するための、GitHub テンプレートリポジトリです。
+CIでの静的解析、脆弱性診断、自動タグ付け (tagpr)、リリース管理 (GoReleaser v2) のパイプラインがあらかじめ統合されているほか、**Node.js不要のスタンドアロン HTMX フロントエンド**、**改変検知付き SQLite バックアップ＆アトミックリストア**、**多層 E2E テストフレームワーク**、および **Claude Code / Antigravity 両対応の AI カスタムスキル**（26種）を標準同梱しています。
 
-## 🚀 特徴
+---
 
-1. **セキュアコーディングのお手本**: `main.go` には `slog` を用いた機密情報（パスワードやAPIキー等）の静的・動的マスキング処理が含まれています。
-2. **自動リリースパイプライン (tagpr & GoReleaser)**:
-   - `main` ブランチへのPRマージ時にリリース用PRが自動で作成・更新されます。
-   - リリースPRをマージすると自動的に `vX.Y.Z` タグが打たれ、GitHub Releases にクロスコンパイルされたバイナリが公開されます。
-3. **継続的インテグレーション (CI)**:
-   - `golangci-lint` による静的解析。
-   - `govulncheck` による依存パッケージの脆弱性診断。
-   - 競合検知付きの `go test` による自動検証。
-4. **AIエージェント用カスタムスキル**:
-   - 開発時に Claude Code や Cursor 等のAIエージェントに読み込ませることで、SRE/DBA/セキュリティの専門知識に基づいた設計・実装・レビューを自動で実施させることができます。
+## 🚀 主な特徴
+
+1. **スタンドアロン HTMX フロントエンド & SSG (Node.js/npm 完全不要)**:
+   - `//go:embed` により HTML テンプレートとアセット（HTMX、CSS）を Go バイナリに完全内包（Air-gapped 閉域環境対応）。
+   - システムメトリクス（CPU、メモリ、Goroutine数）のリアルタイム自動ポーリング。
+   - `make ssg-build` により、GitHub Pages や監査用アーカイブに向けた静的 HTML事前レンダリング出力（SSG）が可能。
+2. **SQLite エンタープライズ運用・ガバナンス層**:
+   - CGO フリーな SQLite 接続（WAL モード、外部キー制約、ビジータイムアウト自動最適化）。
+   - SHA-256 チェックサム付きマニフェストによる改変検知バックアップアーカイブ（`tar.gz`）の作成とアトミックなトランザクション復元。
+   - データ保持期間超過レコードの自動パージ（Retention Cleaner）。
+3. **多層 E2E テストフレームワーク**:
+   - **Layer 1**: 単体＆結合テスト（`make test`、インメモリDB完全分離、カバレッジ 80% 以上）。
+   - **Layer 2**: No-Docker スタンドアロン SQLite E2E（`make sqlite-e2e`、認証・CRUD・バックアップ/リストアを 3 秒で高速検証）。
+   - **Layer 3**: スタンドアロン フロントエンド E2E（`make frontend-e2e`、Headless Chrome スナップショット撮影と HTML レポート自動生成）。
+   - **Layer 4**: Docker フルスタック E2E（`make docker-e2e`、PostgreSQL、VictoriaMetrics、Grafana、API、Web のマルチコンテナ協調動作検証）。
+4. **自動リリースパイプライン (tagpr & GoReleaser v2)**:
+   - `main` ブランチへの PR マージ時にリリース用 PR が自動作成・更新。
+   - リリース PR マージ時に自動でタグが打たれ、GitHub Releases にクロスコンパイルバイナリ（`app`, `web`）が公開。
+   - Go バージョンは `go.mod` を単一の信頼できる情報源 (SSOT) として GitHub Actions と完全同期。
+5. **AI エージェント用カスタムスキル (Claude & Antigravity 両対応)**:
+   - 26種類の専門スキル（`.claude/skills/` および `.agents/skills/`）を同梱。
+
+---
+
+## 📸 スクリーンショット & レポート
+
+| HTMX スタンドアロンダッシュボード | 自動生成された HTML 検証レポート |
+| :---: | :---: |
+| ![Frontend Dashboard](docs/images/frontend_dashboard.png) | `test_reports/frontend_e2e_report.html` |
 
 ---
 
@@ -30,12 +49,19 @@ module github.com/your-username/your-repo-name
 ```
 また、`main.go` や `.goreleaser.yaml` などに含まれるプロジェクト名も必要に応じて書き換えてください。
 
-### 3. AIカスタムスキルのインストール (任意)
-同梱されているカスタムスキルをお使いのPC（グローバル）にインストールして、すべての Claude Code セッションで有効にします：
+### 3. ローカル即時起動
+Docker 不要で、API サーバーと Web ダッシュボードを即座に起動します：
 ```bash
-make install
+make run
 ```
-*(内部的に `~/.claude/skills/` にコピーします)*
+- Web ダッシュボード: `http://localhost:3001`
+- REST API / ヘルスチェック: `http://localhost:8080/v1/system/healthz`
+
+### 4. AI カスタムスキルのインストール
+```bash
+make install-all
+```
+*(Claude Code 向けに `~/.claude/skills/` へ、Antigravity 向けに `.agents/skills/` へ配備)*
 
 ---
 
@@ -45,15 +71,23 @@ Makefile に定義されている以下のコマンドを使用して開発を�
 
 | コマンド | 説明 |
 | :--- | :--- |
+| `make run` | スタンドアロンサーバー（Core API + Web UI）のローカル一括起動 |
+| `make sqlite-e2e` | Docker 不要の超高速 SQLite E2E テストの実行 |
+| `make frontend-e2e` | スタンドアロン HTMX フロントエンド E2E テスト & スナップショット生成 |
+| `make docker-e2e` | Docker Compose フルスタック E2E テスト & Grafana 検証 |
+| `make ssg-build` | Go テンプレートからの静的サイト事前レンダリング出力 (SSG) |
+| `make demo` | フルスタック・インタラクティブデモの起動 |
+| `make test` | データ競合検知 (`-race`) およびカバレッジ測定付き単体テスト |
 | `make fmt` | ソースコードのフォーマットおよびリンターによる自動修正 |
 | `make lint` | `golangci-lint` を使用した静的解析の実行 |
-| `make tidy` | 依存関係 (`go.mod` / `go.sum`) の整理 |
 | `make vulncheck` | `govulncheck` を使用した脆弱性診断の実行 |
-| `make test` | データ競合検知 (`-race`) およびカバレッジ測定付きテストの実行 |
-| `make build` | `bin/app` へのコンパイルの実行 |
+| `make build` | `bin/app` および `bin/web` へのコンパイル |
+| `make release-check` | `GoReleaser v2` 設定ファイルのバリデーション |
 | `make release-snapshot` | `GoReleaser` によるローカルでのスナップショットビルドテスト |
-| `make check` | 同梱スキルのマークダウン文法チェック |
-| `make self-eval` | リポジトリが要件を満たしているかの自己評価の実行 (`REQUIREMENTS.md` の更新) |
+| `make license-check` | Go ソースコードのライセンス＆作成者ヘッダーの検証 |
+| `make license-add` | ライセンスヘッダーの自動付与 |
+| `make check` | 同梱スキルのマークダウン構文チェック |
+| `make self-eval` | リポジトリ要件の自己評価の実行 (`REQUIREMENTS.md` の更新) |
 | `make clean` | ビルド成果物やテストキャッシュのクリーンアップ |
 
 ---
@@ -63,71 +97,13 @@ Makefile に定義されている以下のコマンドを使用して開発を�
 本テンプレートには、さくらのクラウド用の Terraform CI/CD ワークフローが含まれています。`terraform/` ディレクトリ配下のファイルに変更があった場合のみトリガーされます。
 
 ### 🔑 GitHub Secrets の設定
-このワークフローを正常に実行するには、事前にGitHubリポジトリの設定（`Settings -> Secrets and variables -> Actions`）から、以下の GitHub Secrets を必ず登録してください。
-
-| Secret 名 | 説明 |
-| :--- | :--- |
-| `SAKURA_ACCESS_TOKEN` | さくらのクラウド API アクセストークン |
-| `SAKURA_ACCESS_TOKEN_SECRET` | さくらのクラウド API アクセストークンシークレット |
-| `AWS_ACCESS_KEY_ID` | S3互換バックエンド (State管理) 用の AWS Access Key ID |
-| `AWS_SECRET_ACCESS_KEY` | S3互換バックエンド (State管理) 用の AWS Secret Access Key |
+以下の GitHub Secrets をリポジトリに登録してください：
+- `SAKURA_ACCESS_TOKEN` / `SAKURA_ACCESS_TOKEN_SECRET`
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
 
 ---
 
-## 📋 REQUIREMENTS.md による品質自己評価とカスタマイズ
+## 📋 REQUIREMENTS.md による品質自己評価
 
-本テンプレートには、開発時のチェックリストとして `REQUIREMENTS.md` が含まれています。
-`make self-eval` コマンドを実行すると、このファイルのチェックボックス（`[ ]` と `[x]`）が集計され、適合率（パーセンテージ）が動的に自動計算されてファイル下部に書き込まれます。
-
-### 🛠️ カスタマイズ方法（独自の要件の追加）
-
-開発するプロジェクトに合わせて、`REQUIREMENTS.md` に独自の機能要件や非機能要件を自由に追加・変更できます。
-
-1. **`REQUIREMENTS.md` を開く**
-2. **`## 📋 要件チェックリスト` セクションの下に、項目を追加する**
-   - 項目は必ず `- [ ]` (未達成) または `- [x]` (達成) のフォーマットで記述してください。
-   - 例：
-     ```markdown
-     ### 3. プロジェクト固有の機能要件
-     - [ ] **R-3.1 ユーザー認証API**: JWTによる認証機能が実装され、E2Eテストがパスすること。
-     - [ ] **R-3.2 データベース移行**: マイグレーションスクリプトが作成されていること。
-     ```
-3. **セルフチェックの実行**
-   - 項目を追加した後に、以下のコマンドを実行します：
-     ```bash
-     make self-eval
-     ```
-   - これにより、追加したチェックボックスを含めた最新の適合率が自動的に集計され、`## 📈 自己評価結果` セクションが更新されます。
-
----
-
-## 📄 ライセンスと作成者 (AUTHOR) のカスタマイズ
-
-本リポジトリは **Apache License 2.0** でライセンスされています。複製して使用する際は、以下の項目をご自身の情報にカスタマイズしてご利用ください。
-
-### 1. LICENSE ファイルの更新
-リポジトリルートにある [LICENSE](file:///Users/shjtmy/gravity/go_sh0jitmy_template/LICENSE) ファイル内の `[Copyright Holder]` 部分をご自身の名称または組織名に書き換えてください。
-
-### 2. カスタムスキル (author) の一括置換
-同梱されている各カスタムスキル (`.claude/skills/*/SKILL.md`) のフロントマターに定義されている `author: [YOUR_NAME]` を、ご自身の名称に変更してください。
-
-以下のワンコマンドを使用して、すべてのスキルファイルに対して一括置換を実行できます：
-
-**macOS (BSD sed) の場合:**
-```bash
-find .claude/skills -name "SKILL.md" -exec sed -i '' 's/\[YOUR_NAME\]/ご自身の名前/g' {} +
-```
-
-**Linux (GNU sed) の場合:**
-```bash
-find .claude/skills -name "SKILL.md" -exec sed -i 's/\[YOUR_NAME\]/ご自身の名前/g' {} +
-```
-
----
-
-## 🔒 ログ出力時の機密情報保護指針
-`golang-implementation` スキルに準拠し、本テンプレートでは以下のマスキング機構が実装されています。
-
-- **`SecretString` 型**: ログに出力しようとすると、自動的に `[REDACTED]` に置き換わります。
-- **`HashableSecret` 型**: ソルト付きハッシュ化された値を出力し、ログの検索性を維持しつつ秘匿します。
-- **`NewSecureJSONHandler`**: ログのキー名が `password`, `token`, `secret`, `authorization` の属性を検知した場合、動的に値を `[REDACTED]` へ一括マスキングします。
+`make self-eval` コマンドを実行すると、`REQUIREMENTS.md` のチェックボックス（`[x]`）が集計され、適合率（パーセンテージ）が自動計算されてファイル下部に反映されます。
+常に適合率 100% を維持する開発プラクティスを推奨します。

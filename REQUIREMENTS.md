@@ -27,10 +27,20 @@
 - [x] **R-2.15 OTel メトリクス計装（Prometheus Exporter）と低カーディナリティの遵守**: OTel Metrics API (`otel/metric`) を用いてリクエスト数および遅延を計装し、`otel/exporters/prometheus` 経由で `/metrics` から Prometheus 形式で提供し、動的パラメータを排除した低カーディナリティを遵守していること。
 - [x] **R-2.16 安全な pprof プロファイリングの有効化（localhostバインド）**: 本番環境での分析を想定し、pprof ポート（`127.0.0.1:6060`）を外部公開せずに localhost にのみバインドした独立したMuxで安全に有効化していること。
 
+### 3. 高度な運用・可観測性・UI機能 (Musubi ナレッジ統合)
+- [x] **R-3.1 スタンドアロン HTMX Web ダッシュボード (Node.js 不要)**: `//go:embed` によるローカルアセット内包、HTMX によるリアルタイムメトリクス更新とコンポーネント指向 UI が実装されていること。
+- [x] **R-3.2 静的サイト事前レンダリング出力 (SSG)**: 同一の Go テンプレートから静的 HTML とアセットを事前生成する `ExportStaticSite` / `make ssg-build` が実装されていること。
+- [x] **R-3.3 改変検知付き SQLite バックアップ＆アトミックリストア**: SHA-256 チェックサム付きマニフェストによるバックアップアーカイブ（`tar.gz`）の作成、破損検知、アトミックなトランザクション復元が実装され、E2Eテストで検証されていること。
+- [x] **R-3.4 データ保持期間自動パージ (Retention Cleaner)**: 保持期間を超過した古いバックアップファイルおよび時系列レコードを自動パージする機能が実装され、API およびテストで検証されていること。
+- [x] **R-3.5 多層 E2E テストフレームワーク**: `make sqlite-e2e`（No-Docker高速E2E）、`make frontend-e2e`（Headless Chrome UI検証＆スナップショット＆HTMLレポート）、`make docker-e2e`（Dockerフルスタック＆Grafana検証）の多層テストが整備されていること。
+- [x] **R-3.6 統合可観測性スタック (VictoriaMetrics + Grafana)**: Docker Compose 環境下で VictoriaMetrics による軽量スクレイピングと Grafana ダッシュボード自動プロビジョニングが整備されていること。
+- [x] **R-3.7 AI カスタムスキル体系の整備 (Claude & Antigravity 両対応)**: 26種類の専門スキルが `.claude/skills/` および `.agents/skills/` に配備され、`make check` により構文検証をパスすること。
+- [x] **R-3.8 リリース管理＆Go バージョン SSOT**: `go-version-file: 'go.mod'` により Go バージョンを `go.mod` に一元管理し、`internal/version/version.go` から GoReleaser v2 `-ldflags` によるメタデータ埋め込みが実装されていること。
+
 ---
 
 ## 📈 自己評価結果
 
-- **合計要件数**: 18
-- **達成要件数**: 18 / 18
-- **適合率 (達成数/18)**: 100.00 %
+- **合計要件数**: 26
+- **達成要件数**: 26 / 26
+- **適合率 (達成数/26)**: 100.00 %

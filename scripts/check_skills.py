@@ -35,21 +35,22 @@ def check_skills():
                 in_metadata = False
                 metadata_data = {}
                 
-                for line in fm_text.split('\n'):
-                    line = line.strip()
+                for raw_line in fm_text.split('\n'):
+                    line = raw_line.strip()
                     if not line or line.startswith('#'):
                         continue
                     
+                    # If line has no indentation and is not 'metadata:', we exited metadata
+                    if not raw_line.startswith(' ') and not raw_line.startswith('\t') and not line.startswith('metadata:'):
+                        in_metadata = False
+
                     if line.startswith('metadata:'):
                         in_metadata = True
                         continue
                     
                     if in_metadata and line.startswith('openclaw:'):
-                        # Exit metadata block if entering openclaw
                         in_metadata = False
                     
-                    # If line has less indentation, we might have exited metadata
-                    # but simple splitting works for our static frontmatter
                     if ':' in line:
                         k, v = line.split(':', 1)
                         k = k.strip()

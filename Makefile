@@ -1,10 +1,10 @@
 # Makefile for Go Development & Custom Skills Management
 
-.PHONY: help check install self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint publish-pr ai-pr
+.PHONY: help check install install-agents install-all self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint publish-pr ai-pr run sqlite-e2e frontend-e2e docker-e2e ssg-build demo
 
 help:
 	@echo "Available commands:"
-	@echo "  Go Development:"
+	@echo "  Go Development & Testing:"
 	@echo "    openapi-lint     Validate OpenAPI spec with Spectral"
 	@echo "    generate         Generate OpenAPI and ent entity code"
 	@echo "    fmt              Format Go source files"
@@ -12,18 +12,25 @@ help:
 	@echo "    tidy             Run go mod tidy"
 	@echo "    vulncheck        Run govulncheck vulnerability scanner"
 	@echo "    test             Run Go tests with race detector and coverage"
-	@echo "    build            Build binary to bin/app"
+	@echo "    build            Build binaries to bin/app and bin/web"
+	@echo "    run              Run local standalone stack (Core API + Web Dashboard)"
+	@echo "    sqlite-e2e       Run fast standalone SQLite E2E test (No-Docker)"
+	@echo "    frontend-e2e     Run standalone HTMX frontend E2E test & snapshot suite"
+	@echo "    docker-e2e       Run full-stack Docker Compose E2E test & Grafana assertions"
+	@echo "    ssg-build        Generate pre-rendered static site HTML and assets (SSG)"
+	@echo "    demo             Launch full-stack interactive demo with seeded data"
 	@echo "    release-check    Validate GoReleaser configuration"
 	@echo "    release-snapshot Run GoReleaser snapshot build"
 	@echo "    license-check    Verify license & author headers in Go files"
 	@echo "    license-add      Automatically add license headers to Go files"
-	@echo "    migration-diff   Generate DB migration SQL file with Atlas (requires Atlas CLI)"
-	@echo "                     Usage: make migration-diff name=migration_name"
+	@echo "    migration-diff   Generate DB migration SQL file with Atlas"
 	@echo "    publish-pr       Verify formatting/lints/tests, push to origin, and create GitHub PR"
-	@echo "    ai-pr            Trigger AI agent to analyze commits/diffs and create a draft GitHub PR in Japanese"
+	@echo "    ai-pr            Trigger AI agent to draft a GitHub PR in Japanese"
 	@echo "  Custom Skills Management:"
 	@echo "    check            Validate custom skill frontmatter and syntax"
 	@echo "    install          Install custom skills globally to ~/.claude/skills/"
+	@echo "    install-agents   Install/Sync custom skills to .agents/skills/ (Antigravity)"
+	@echo "    install-all      Install custom skills to both Claude and Antigravity"
 	@echo "    self-eval        Run requirements self-evaluation and update checklist"
 	@echo "  General:"
 	@echo "    clean            Clean up build artifacts and temporary files"
@@ -68,17 +75,51 @@ test: generate
 	@bash scripts/check_coverage.sh
 
 build: generate
-	@echo "==> Building binary..."
+	@echo "==> Building binaries..."
 	@mkdir -p bin
 	@go build -v -o bin/app ./cmd/app
+	@go build -v -o bin/web ./cmd/web
+
+run: build
+	@echo "==> Starting local standalone servers..."
+	@bash scripts/run_local.sh
+
+sqlite-e2e: build
+	@echo "==> Running Standalone SQLite E2E tests..."
+	@bash scripts/sqlite_e2e.sh
+
+frontend-e2e: build
+	@echo "==> Running Standalone HTMX Frontend E2E tests..."
+	@bash scripts/frontend_e2e.sh
+
+docker-e2e:
+	@echo "==> Running Full-Stack Docker Compose E2E tests..."
+	@bash scripts/docker_e2e.sh
+
+ssg-build:
+	@echo "==> Generating static site export (SSG)..."
+	@mkdir -p dist/static-site
+	@go run ./cmd/web --ssg-export dist/static-site
+
+demo:
+	@echo "==> Starting Full-Stack Live Demo..."
+	@bash scripts/demo.sh
 
 release-check:
 	@echo "==> Validating GoReleaser configuration..."
-	@goreleaser check
+	@if command -v goreleaser >/dev/null 2>&1; then \
+		goreleaser check; \
+	else \
+		go run github.com/goreleaser/goreleaser/v2@latest check; \
+	fi
 
 release-snapshot:
 	@echo "==> Building GoReleaser snapshot..."
-	@goreleaser release --snapshot --clean
+	@if command -v goreleaser >/dev/null 2>&1; then \
+		goreleaser release --snapshot --clean; \
+	else \
+		go run github.com/goreleaser/goreleaser/v2@latest release --snapshot --clean; \
+	fi
 
 license-check:
 	@echo "==> Checking Go source files license headers..."
@@ -120,7 +161,16 @@ install:
 	@echo "==> Installing custom skills globally to ~/.claude/skills/..."
 	@mkdir -p ~/.claude/skills/
 	@cp -R .claude/skills/* ~/.claude/skills/
-	@echo "Skills successfully installed!"
+	@echo "Claude skills successfully installed!"
+
+install-agents:
+	@echo "==> Syncing custom skills to .agents/skills/ (Antigravity)..."
+	@mkdir -p .agents/skills/
+	@cp -R .claude/skills/* .agents/skills/
+	@echo "Antigravity skills successfully synced!"
+
+install-all: install install-agents
+	@echo "All custom skills successfully installed for Claude and Antigravity!"
 
 self-eval:
 	@echo "==> Running self-evaluation..."
@@ -130,6 +180,5 @@ self-eval:
 
 clean:
 	@echo "==> Cleaning up build artifacts..."
-	@rm -rf bin/ dist/ ent/migrate/migrations/
-	# Keep generated code unless explicit reset is wanted
+	@rm -rf bin/ dist/ ent/migrate/migrations/ test_reports/
 	@go clean -testcache

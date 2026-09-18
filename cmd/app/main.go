@@ -33,6 +33,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shjtmy/go_sh0jitmy_template/internal/database"
+	"github.com/shjtmy/go_sh0jitmy_template/internal/version"
 	"github.com/shjtmy/go_sh0jitmy_template/internal/web"
 	"github.com/urfave/cli/v2"
 	"go.opentelemetry.io/otel"
@@ -41,9 +42,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/crypto/acme/autocert"
 )
-
-// Version is the application version, automatically managed by tagpr.
-const Version = "0.0.0"
 
 // initOTel は OpenTelemetry SDK (TracerProvider と MeterProvider) を初期化します。
 func initOTel() (*trace.TracerProvider, *metric.MeterProvider, error) {
@@ -63,8 +61,17 @@ func initOTel() (*trace.TracerProvider, *metric.MeterProvider, error) {
 	return tp, meterProvider, nil
 }
 
-// startSecurePprof は localhost:6060 にバインドされた安全な pprof サーバーを起動します。
+// startSecurePprof は localhost にバインドされた安全な pprof サーバーを起動します。
 func startSecurePprof() *http.Server {
+	if os.Getenv("PPROF_ENABLED") == "false" {
+		return nil
+	}
+	pprofPort := os.Getenv("PPROF_PORT")
+	if pprofPort == "" {
+		pprofPort = "6060"
+	}
+	addr := "127.0.0.1:" + pprofPort
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
@@ -73,13 +80,13 @@ func startSecurePprof() *http.Server {
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	srv := &http.Server{
-		Addr:              "127.0.0.1:6060",
+		Addr:              addr,
 		Handler:           mux,
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
 	go func() {
-		slog.Info("Starting secure pprof server on localhost...", "address", "127.0.0.1:6060")
+		slog.Info("Starting secure pprof server on localhost...", "address", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("pprof server failed to run", "error", err)
 		}
@@ -96,7 +103,7 @@ func main() {
 	app := &cli.App{
 		Name:    "go-template-app",
 		Usage:   "A secure and production-ready Go project template",
-		Version: Version,
+		Version: version.Version,
 		Commands: []*cli.Command{
 			{
 				Name:  "server",
@@ -107,6 +114,7 @@ func main() {
 						Aliases: []string{"p"},
 						Value:   "8080",
 						Usage:   "HTTP Port to listen on (ignored if --tls-domain is set)",
+						EnvVars: []string{"PORT", "SERVER_PORT"},
 					},
 					&cli.StringFlag{
 						Name:  "tls-domain",
@@ -128,6 +136,32 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return runServer(c.Context, c)
+				},
+			},
+			{
+				Name:  "web",
+				Usage: "Start the standalone HTMX web dashboard",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "port",
+						Aliases: []string{"p"},
+						Value:   "3001",
+						Usage:   "Port for web UI server",
+						EnvVars: []string{"WEB_PORT"},
+					},
+					&cli.StringFlag{
+						Name:    "backup-dir",
+						Value:   "data/backups",
+						Usage:   "Directory where database backup archives are stored",
+						EnvVars: []string{"BACKUP_DIR"},
+					},
+					&cli.StringFlag{
+						Name:  "ssg-export",
+						Usage: "Export static site HTML and assets to directory and exit",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return runWebServer(c.Context, c)
 				},
 			},
 		},
@@ -157,18 +191,23 @@ func runServer(ctx context.Context, c *cli.Context) error {
 	}()
 
 	pprofSrv := startSecurePprof()
-	defer func() {
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if shutdownErr := pprofSrv.Shutdown(shutdownCtx); shutdownErr != nil {
-			slog.Warn("Failed to shutdown pprof server", "error", shutdownErr)
-		}
-	}()
+	if pprofSrv != nil {
+		defer func() {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			if shutdownErr := pprofSrv.Shutdown(shutdownCtx); shutdownErr != nil {
+				slog.Warn("Failed to shutdown pprof server", "error", shutdownErr)
+			}
+		}()
+	}
 
 	dbDriver := "sqlite"
 	dbDSN := "ent.db"
 	if os.Getenv("DATABASE_DRIVER") != "" {
 		dbDriver = os.Getenv("DATABASE_DRIVER")
+	}
+	if os.Getenv("DATABASE_DSN") != "" {
+		dbDSN = os.Getenv("DATABASE_DSN")
 	}
 	if os.Getenv("DATABASE_URL") != "" {
 		dbDSN = os.Getenv("DATABASE_URL")
@@ -278,6 +317,63 @@ func runServer(ctx context.Context, c *cli.Context) error {
 
 	<-ctx.Done()
 	slog.Info("Shutting down API server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return srv.Shutdown(shutdownCtx)
+}
+
+func runWebServer(ctx context.Context, c *cli.Context) error {
+	dbDriver := "sqlite"
+	dbDSN := "ent.db"
+	if os.Getenv("DATABASE_DRIVER") != "" {
+		dbDriver = os.Getenv("DATABASE_DRIVER")
+	}
+	if os.Getenv("DATABASE_DSN") != "" {
+		dbDSN = os.Getenv("DATABASE_DSN")
+	}
+	if os.Getenv("DATABASE_URL") != "" {
+		dbDSN = os.Getenv("DATABASE_URL")
+		if strings.HasPrefix(dbDSN, "postgres://") || strings.HasPrefix(dbDSN, "postgresql://") {
+			dbDriver = "postgres"
+		}
+	}
+
+	dbClient, err := database.NewClient(ctx, dbDriver, dbDSN)
+	if err != nil {
+		return fmt.Errorf("database init failed: %w", err)
+	}
+	defer func() { _ = dbClient.Close() }()
+
+	_ = database.SeedAdminUser(ctx, dbClient)
+
+	backupDir := c.String("backup-dir")
+	ssgDir := c.String("ssg-export")
+	if ssgDir != "" {
+		slog.Info("Exporting static site...", "outDir", ssgDir)
+		return web.ExportStaticSite(ctx, dbClient, backupDir, ssgDir)
+	}
+
+	port := c.String("port")
+	uiServer, err := web.NewUIServer(dbClient, backupDir, port)
+	if err != nil {
+		return fmt.Errorf("ui server init failed: %w", err)
+	}
+
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           uiServer.Engine,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		slog.Info("Starting Standalone HTMX Dashboard...", "port", port, "url", fmt.Sprintf("http://localhost:%s", port))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("UI server failed", "error", err)
+		}
+	}()
+
+	<-ctx.Done()
+	slog.Info("Shutting down UI server...")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return srv.Shutdown(shutdownCtx)
