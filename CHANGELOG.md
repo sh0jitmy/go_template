@@ -1,5 +1,7 @@
 # Changelog
 
+## [v0.0.1](https://github.com/sh0jitmy/go_template/compare/v0.0.2...v0.0.1) - 2026-09-18
+
 ## [v0.0.2](https://github.com/sh0jitmy/go_template/compare/v0.0.1...v0.0.2) - 2026-06-28
 
 - add terraform and coverage check  by @sh0jitmy in https://github.com/sh0jitmy/go_template/pull/8
