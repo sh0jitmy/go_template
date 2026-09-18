@@ -4,12 +4,30 @@
 package ogen
 
 import (
+	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
 
 const (
 	BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"
 )
+
+// BackupResponse Database backup result information.
+type BackupResponse struct {
+	DownloadUrl string `json:"download_url"`
+	Filename    string `json:"filename"`
+	SizeBytes   *int   `json:"size_bytes,omitempty"`
+}
+
+// HealthResponse Health status response.
+type HealthResponse struct {
+	Status    string     `json:"status"`
+	Timestamp *time.Time `json:"timestamp,omitempty"`
+}
 
 // LoginRequest The payload containing credentials to log in.
 type LoginRequest struct {
@@ -41,6 +59,31 @@ type ProblemDetails struct {
 	Type string `json:"type"`
 }
 
+// PurgeRequest Parameters for data purge.
+type PurgeRequest struct {
+	RetentionDays *int `json:"retention_days,omitempty"`
+}
+
+// PurgeResponse Data purge operation summary.
+type PurgeResponse struct {
+	Message       *string `json:"message,omitempty"`
+	PurgedCount   int     `json:"purged_count"`
+	RetentionDays *int    `json:"retention_days,omitempty"`
+}
+
+// RestoreRequest Restore request payload.
+type RestoreRequest struct {
+	// ArchivePath Relative filename or absolute path of the backup archive.
+	ArchivePath string `json:"archive_path"`
+}
+
+// RestoreResponse Restore operation result summary.
+type RestoreResponse struct {
+	Message    *string    `json:"message,omitempty"`
+	RestoredAt *time.Time `json:"restored_at,omitempty"`
+	Success    bool       `json:"success"`
+}
+
 // User Represents a user profile in the system.
 type User struct {
 	// Id Unique identifier of the user.
@@ -56,11 +99,38 @@ type bearerAuthContextKey string
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// PurgeRecordsJSONRequestBody defines body for PurgeRecords for application/json ContentType.
+type PurgeRecordsJSONRequestBody = PurgeRequest
+
+// RestoreBackupJSONRequestBody defines body for RestoreBackup for application/json ContentType.
+type RestoreBackupJSONRequestBody = RestoreRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// User login
 	// (POST /v1/login)
 	Login(c *gin.Context)
+	// List backup archives
+	// (GET /v1/system/backups)
+	ListBackups(c *gin.Context)
+	// Create database backup
+	// (POST /v1/system/backups)
+	CreateBackup(c *gin.Context)
+	// Download backup archive
+	// (GET /v1/system/backups/{filename})
+	DownloadBackup(c *gin.Context, filename string)
+	// Liveness probe
+	// (GET /v1/system/healthz)
+	GetHealthz(c *gin.Context)
+	// Purge expired retention records
+	// (POST /v1/system/purge)
+	PurgeRecords(c *gin.Context)
+	// Readiness probe
+	// (GET /v1/system/readyz)
+	GetReadyz(c *gin.Context)
+	// Restore database from backup
+	// (POST /v1/system/restores)
+	RestoreBackup(c *gin.Context)
 	// Get current authenticated user
 	// (GET /v1/users/me)
 	GetMe(c *gin.Context)
@@ -86,6 +156,109 @@ func (siw *ServerInterfaceWrapper) Login(c *gin.Context) {
 	}
 
 	siw.Handler.Login(c)
+}
+
+// ListBackups operation middleware
+func (siw *ServerInterfaceWrapper) ListBackups(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListBackups(c)
+}
+
+// CreateBackup operation middleware
+func (siw *ServerInterfaceWrapper) CreateBackup(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateBackup(c)
+}
+
+// DownloadBackup operation middleware
+func (siw *ServerInterfaceWrapper) DownloadBackup(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "filename" -------------
+	var filename string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "filename", c.Param("filename"), &filename, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter filename: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DownloadBackup(c, filename)
+}
+
+// GetHealthz operation middleware
+func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetHealthz(c)
+}
+
+// PurgeRecords operation middleware
+func (siw *ServerInterfaceWrapper) PurgeRecords(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PurgeRecords(c)
+}
+
+// GetReadyz operation middleware
+func (siw *ServerInterfaceWrapper) GetReadyz(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetReadyz(c)
+}
+
+// RestoreBackup operation middleware
+func (siw *ServerInterfaceWrapper) RestoreBackup(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RestoreBackup(c)
 }
 
 // GetMe operation middleware
@@ -131,5 +304,12 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.POST(options.BaseURL+"/v1/login", wrapper.Login)
+	router.GET(options.BaseURL+"/v1/system/backups", wrapper.ListBackups)
+	router.POST(options.BaseURL+"/v1/system/backups", wrapper.CreateBackup)
+	router.GET(options.BaseURL+"/v1/system/backups/:filename", wrapper.DownloadBackup)
+	router.GET(options.BaseURL+"/v1/system/healthz", wrapper.GetHealthz)
+	router.POST(options.BaseURL+"/v1/system/purge", wrapper.PurgeRecords)
+	router.GET(options.BaseURL+"/v1/system/readyz", wrapper.GetReadyz)
+	router.POST(options.BaseURL+"/v1/system/restores", wrapper.RestoreBackup)
 	router.GET(options.BaseURL+"/v1/users/me", wrapper.GetMe)
 }

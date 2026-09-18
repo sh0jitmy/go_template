@@ -17,13 +17,20 @@ awk '
 BEGIN { total = 0; covered = 0; }
 /:/ {
     if ($0 ~ /\/internal\/(service|domain)\//) {
-        total += $2;
-        if ($3 > 0) {
-            covered += $2;
+        block = $1;
+        stmts[block] = $2;
+        if ($3 > max_count[block]) {
+            max_count[block] = $3;
         }
     }
 }
 END {
+    for (b in stmts) {
+        total += stmts[b];
+        if (max_count[b] > 0) {
+            covered += stmts[b];
+        }
+    }
     if (total == 0) {
         print "ERROR: No statements found in internal/service/ or internal/domain/."
         exit 1

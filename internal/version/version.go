@@ -14,9 +14,15 @@
 //
 // Author: [YOUR_NAME]
 
-// Package main is the entry point of the Go template application.
-package main
+// Package version defines application semantic version and build metadata.
+package version
 
-// Version はアプリケーションのセマンティックバージョンです。
-// GitHub Actions の tagpr によって自動的にインクリメントされ、管理されます。
-const Version = "0.0.1"
+// Version is the current semantic version of the application.
+// Managed and automatically bumped by tagpr in CI/CD.
+var Version = "0.0.1"
+
+// Commit is the git commit hash injected during build time by GoReleaser (-ldflags).
+var Commit = "none"
+
+// Date is the build timestamp injected during build time by GoReleaser (-ldflags).
+var Date = "unknown"

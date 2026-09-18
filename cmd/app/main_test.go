@@ -47,8 +47,8 @@ func TestMain(m *testing.M) {
 func setupTestDB(t *testing.T) *ent.Client {
 	t.Helper()
 
-	// 1. 手動で sql.Open を実行
-	db, err := sql.Open("sqlite", "file::memory:?cache=shared&_pragma=foreign_keys(1)")
+	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared&_pragma=foreign_keys(1)", t.Name())
+	db, err := sql.Open("sqlite", dsn)
 	require.NoError(t, err)
 
 	// 2. ent.NewClient でクライアントをラップ
@@ -251,5 +251,104 @@ func TestE2E_AppAPI(t *testing.T) {
 		}()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+}
+
+// TestE2E_SystemEndpoints verifies healthz, readyz, backups, restores, and retention purge endpoints.
+func TestE2E_SystemEndpoints(t *testing.T) {
+	t.Parallel()
+
+	dbClient := setupTestDB(t)
+	defer func() {
+		_ = dbClient.Close()
+	}()
+
+	r := web.SetupEngine(dbClient)
+
+	// 1. Liveness Probe (/v1/system/healthz)
+	{
+		req, _ := http.NewRequest(http.MethodGet, "/v1/system/healthz", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]interface{}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "OK", resp["status"])
+	}
+
+	// 2. Readiness Probe (/v1/system/readyz)
+	{
+		req, _ := http.NewRequest(http.MethodGet, "/v1/system/readyz", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]interface{}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "READY", resp["status"])
+	}
+
+	// 3. Create Backup (POST /v1/system/backups)
+	var backupFilename string
+	{
+		req, _ := http.NewRequest(http.MethodPost, "/v1/system/backups", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]interface{}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		backupFilename = resp["filename"].(string)
+		assert.NotEmpty(t, backupFilename)
+	}
+
+	// 4. List Backups (GET /v1/system/backups)
+	{
+		req, _ := http.NewRequest(http.MethodGet, "/v1/system/backups", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp []map[string]interface{}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.NotEmpty(t, resp)
+	}
+
+	// 5. Download Backup (GET /v1/system/backups/{filename})
+	{
+		req, _ := http.NewRequest(http.MethodGet, "/v1/system/backups/"+backupFilename, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.NotEmpty(t, w.Body.Bytes())
+	}
+
+	// 6. Restore Backup (POST /v1/system/restores)
+	{
+		payload := map[string]string{
+			"archive_path": backupFilename,
+		}
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/v1/system/restores", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]interface{}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, true, resp["success"])
+	}
+
+	// 7. Retention Purge (POST /v1/system/purge)
+	{
+		payload := map[string]int{
+			"retention_days": 30,
+		}
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/v1/system/purge", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp map[string]interface{}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.InDelta(t, float64(0), resp["purged_count"], 0.001)
 	}
 }

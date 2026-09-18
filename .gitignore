@@ -32,3 +32,13 @@ bin/
 
 # Go toolchain download
 .go/
+
+# Database & Test Artifacts
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+cmd/app/data/
+test_reports/
+coverage.out

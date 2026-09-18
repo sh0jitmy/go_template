@@ -6,9 +6,38 @@ before:
     - go mod tidy
 
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - id: app
+    binary: app
     main: ./cmd/app
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/shjtmy/go_sh0jitmy_template/internal/version.Version={{.Version}}
+      - -X github.com/shjtmy/go_sh0jitmy_template/internal/version.Commit={{.Commit}}
+      - -X github.com/shjtmy/go_sh0jitmy_template/internal/version.Date={{.Date}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+  - id: web
+    binary: web
+    main: ./cmd/web
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/shjtmy/go_sh0jitmy_template/internal/version.Version={{.Version}}
+      - -X github.com/shjtmy/go_sh0jitmy_template/internal/version.Commit={{.Commit}}
+      - -X github.com/shjtmy/go_sh0jitmy_template/internal/version.Date={{.Date}}
     goos:
       - linux
       - darwin
@@ -18,8 +47,8 @@ builds:
       - arm64
 
 archives:
-  - format: tar.gz
-    # this name template makes the OS and Arch compatible with the format of Go binaries
+  - formats:
+      - tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -27,10 +56,10 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
 
 checksum:
   name_template: 'checksums.txt'

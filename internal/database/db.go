@@ -23,6 +23,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
 
 	entsql "entgo.io/ent/dialect/sql"
 	sqlite "github.com/glebarez/go-sqlite"
@@ -61,6 +64,23 @@ func NewClient(ctx context.Context, driver, dsn string) (*ent.Client, error) {
 		}
 	case "sqlite", "sqlite3":
 		dialect = "sqlite3"
+		if !strings.Contains(dsn, "_fk=1") && !strings.Contains(dsn, "foreign_keys(1)") {
+			if strings.Contains(dsn, "?") {
+				dsn += "&_pragma=foreign_keys(1)"
+			} else {
+				dsn += "?_pragma=foreign_keys(1)"
+			}
+		}
+		// ファイルベースSQLiteの場合、親ディレクトリを自動作成
+		if !strings.Contains(dsn, ":memory:") && !strings.Contains(dsn, "mode=memory") {
+			filePath := strings.TrimPrefix(dsn, "file:")
+			if idx := strings.Index(filePath, "?"); idx != -1 {
+				filePath = filePath[:idx]
+			}
+			if dir := filepath.Dir(filePath); dir != "" && dir != "." {
+				_ = os.MkdirAll(dir, 0750)
+			}
+		}
 		db, err = sql.Open("sqlite", dsn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open sqlite database: %w", err)
@@ -112,4 +132,12 @@ func SeedAdminUser(ctx context.Context, client *ent.Client) error {
 	}
 
 	return nil
+}
+
+// FormatSQLiteDSN formats a file path or in-memory target into an optimized SQLite DSN with WAL and foreign keys enabled.
+func FormatSQLiteDSN(dbPath string) string {
+	if strings.Contains(dbPath, "?") {
+		return dbPath
+	}
+	return fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&cache=shared&mode=rwc", dbPath)
 }
