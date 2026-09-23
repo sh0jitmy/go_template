@@ -1,7 +1,7 @@
 # Go & SRE/DB/Security 開発用 GitHub テンプレートリポジトリ
 
 このリポジトリは、Go (Golang) によるセキュアで高信頼なWebアプリケーション・APIサービス開発を迅速に開始するための、GitHub テンプレートリポジトリです。
-CIでの静的解析、脆弱性診断、自動タグ付け (tagpr)、リリース管理 (GoReleaser v2) のパイプラインがあらかじめ統合されているほか、**Node.js不要のスタンドアロン HTMX フロントエンド**、**改変検知付き SQLite バックアップ＆アトミックリストア**、**多層 E2E テストフレームワーク**、および **Claude Code / Antigravity 両対応の AI カスタムスキル**（26種）を標準同梱しています。
+CIでの静的解析、脆弱性診断、自動タグ付け (tagpr)、リリース管理 (GoReleaser v2) のパイプラインがあらかじめ統合されているほか、**Node.js不要のスタンドアロン HTMX フロントエンド**、**改変検知付き SQLite バックアップ＆アトミックリストア**、**多層 E2E テストフレームワーク＆GitHub Pagesレポート**、**Dewy プル型自動デプロイツールキット**、および **Claude Code / Antigravity 両対応の AI カスタムスキル**（30種）を標準同梱しています。
 
 ---
 
@@ -15,17 +15,19 @@ CIでの静的解析、脆弱性診断、自動タグ付け (tagpr)、リリー�
    - CGO フリーな SQLite 接続（WAL モード、外部キー制約、ビジータイムアウト自動最適化）。
    - SHA-256 チェックサム付きマニフェストによる改変検知バックアップアーカイブ（`tar.gz`）の作成とアトミックなトランザクション復元。
    - データ保持期間超過レコードの自動パージ（Retention Cleaner）。
-3. **多層 E2E テストフレームワーク**:
+3. **多層 E2E テストフレームワーク & GitHub Pages レポート**:
    - **Layer 1**: 単体＆結合テスト（`make test`、インメモリDB完全分離、カバレッジ 80% 以上）。
    - **Layer 2**: No-Docker スタンドアロン SQLite E2E（`make sqlite-e2e`、認証・CRUD・バックアップ/リストアを 3 秒で高速検証）。
    - **Layer 3**: スタンドアロン フロントエンド E2E（`make frontend-e2e`、Headless Chrome スナップショット撮影と HTML レポート自動生成）。
    - **Layer 4**: Docker フルスタック E2E（`make docker-e2e`、PostgreSQL、VictoriaMetrics、Grafana、API、Web のマルチコンテナ協調動作検証）。
-4. **自動リリースパイプライン (tagpr & GoReleaser v2)**:
-   - `main` ブランチへの PR マージ時にリリース用 PR が自動作成・更新。
-   - リリース PR マージ時に自動でタグが打たれ、GitHub Releases にクロスコンパイルバイナリ（`app`, `web`）が公開。
+   - **HTML Dashboard**: `make e2e-report` により機密情報をサニタイズした E2E HTML レポートを生成し、GitHub Pages へ自動公開。
+4. **自動リリース＆Dewy プル型デプロイツールキット**:
+   - `main` ブランチへの PR マージ時にリリース用 PR が自動作成・更新 (tagpr)。
+   - リリース PR マージ時に自動でタグが打たれ、GitHub Releases にクロスコンパイルバイナリ（`app`, `web`）が公開 (GoReleaser v2)。
+   - S3/オブジェクトストレージ経由のゼロダウンタイム切り替えを行う Dewy プル型デプロイ設定テンプレート（`deploy/dewy/`）および SOPS/age シークレット管理を統合。
    - Go バージョンは `go.mod` を単一の信頼できる情報源 (SSOT) として GitHub Actions と完全同期。
 5. **AI エージェント用カスタムスキル (Claude & Antigravity 両対応)**:
-   - 26種類の専門スキル（`.claude/skills/` および `.agents/skills/`）を同梱。
+   - 30種類の専門スキル（`.claude/skills/` および `.agents/skills/`）を同梱。ドキュメント同期ガバナンスおよびゼロ Lint 容認ルールを標準適用。
 
 ---
 
@@ -82,11 +84,13 @@ Makefile に定義されている以下のコマンドを使用して開発を�
 | `make lint` | `golangci-lint` を使用した静的解析の実行 |
 | `make vulncheck` | `govulncheck` を使用した脆弱性診断の実行 |
 | `make build` | `bin/app` および `bin/web` へのコンパイル |
+| `make e2e-report` | E2E テスト実行および機密サニタイズ付きスタンドアロン HTML レポート生成 |
 | `make release-check` | `GoReleaser v2` 設定ファイルのバリデーション |
 | `make release-snapshot` | `GoReleaser` によるローカルでのスナップショットビルドテスト |
 | `make license-check` | Go ソースコードのライセンス＆作成者ヘッダーの検証 |
 | `make license-add` | ライセンスヘッダーの自動付与 |
 | `make check` | 同梱スキルのマークダウン構文チェック |
+| `make workflow-check` | GitHub Actions ワークフロー定義ファイルの構文・静的検証 |
 | `make self-eval` | リポジトリ要件の自己評価の実行 (`REQUIREMENTS.md` の更新) |
 | `make clean` | ビルド成果物やテストキャッシュのクリーンアップ |
 
