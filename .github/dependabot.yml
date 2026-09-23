@@ -36,9 +36,13 @@ updates:
       prefix: "build"
       include: "scope"
     groups:
-      minor-and-patch:
+      patch:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      minor:
         patterns:
           - "*"
         update-types:
           - "minor"
-          - "patch"
