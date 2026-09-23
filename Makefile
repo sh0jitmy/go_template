@@ -1,6 +1,6 @@
 # Makefile for Go Development & Custom Skills Management
 
-.PHONY: help check install install-agents install-all self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint publish-pr ai-pr run sqlite-e2e frontend-e2e docker-e2e ssg-build demo
+.PHONY: help check install install-agents install-all self-eval generate test fmt lint tidy vulncheck build release-check release-snapshot license-check license-add migration-diff clean openapi-lint publish-pr ai-pr run sqlite-e2e frontend-e2e docker-e2e ssg-build demo e2e-report workflow-check
 
 help:
 	@echo "Available commands:"
@@ -26,6 +26,8 @@ help:
 	@echo "    migration-diff   Generate DB migration SQL file with Atlas"
 	@echo "    publish-pr       Verify formatting/lints/tests, push to origin, and create GitHub PR"
 	@echo "    ai-pr            Trigger AI agent to draft a GitHub PR in Japanese"
+	@echo "    e2e-report       Run E2E tests and generate HTML report for GitHub Pages"
+	@echo "    workflow-check   Validate GitHub Actions workflow YAML syntax"
 	@echo "  Custom Skills Management:"
 	@echo "    check            Validate custom skill frontmatter and syntax"
 	@echo "    install          Install custom skills globally to ~/.claude/skills/"
@@ -175,6 +177,22 @@ install-all: install install-agents
 self-eval:
 	@echo "==> Running self-evaluation..."
 	@python3 scripts/self_eval.py
+
+e2e-report: build
+	@echo "==> Running E2E tests and generating HTML report..."
+	@bash scripts/e2e_report.sh
+
+workflow-check:
+	@echo "==> Validating GitHub Actions workflow files..."
+	@if command -v actionlint >/dev/null 2>&1; then \
+		actionlint; \
+	else \
+		echo "actionlint is not installed. Install with: brew install actionlint"; \
+		echo "Falling back to YAML syntax check..."; \
+		for f in .github/workflows/*.yml; do \
+			python3 -c "import yaml; yaml.safe_load(open('$$f'))" && echo "  ✅ $$f" || echo "  ❌ $$f"; \
+		done; \
+	fi
 
 # --- General ---
 
