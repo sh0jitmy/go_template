@@ -7,6 +7,7 @@ run:
 linters:
   default: none
   enable:
+    - depguard
     - errcheck
     - govet
     - ineffassign
@@ -18,6 +19,57 @@ linters:
     - paralleltest
     - tparallel
   settings:
+    depguard:
+      rules:
+        global:
+          files:
+            - "$all"
+            - "!**/ent/**"
+            - "!**/ogen/**"
+          deny:
+            - pkg: "io/ioutil"
+              desc: "Use os or io package instead (deprecated since Go 1.16)"
+            - pkg: "github.com/pkg/errors"
+              desc: "Use standard errors package and fmt.Errorf with %w"
+        service-layer:
+          files:
+            - "**/internal/service/*.go"
+            - "!$test"
+          deny:
+            - pkg: "github.com/gin-gonic/gin"
+              desc: "Service layer must not depend on HTTP framework (gin)"
+            - pkg: "net/http"
+              desc: "Service layer must not depend on net/http transport"
+            - pkg: "github.com/shjtmy/go_sh0jitmy_template/internal/web"
+              desc: "Service layer must not depend on web layer"
+            - pkg: "github.com/shjtmy/go_sh0jitmy_template/internal/database"
+              desc: "Service layer must not depend on database setup package"
+        database-layer:
+          files:
+            - "**/internal/database/*.go"
+            - "!$test"
+          deny:
+            - pkg: "github.com/gin-gonic/gin"
+              desc: "Database layer must not depend on HTTP framework (gin)"
+            - pkg: "net/http"
+              desc: "Database layer must not depend on net/http transport"
+            - pkg: "github.com/shjtmy/go_sh0jitmy_template/internal/web"
+              desc: "Database layer must not depend on web layer"
+            - pkg: "github.com/shjtmy/go_sh0jitmy_template/internal/service"
+              desc: "Database layer must not depend on service layer"
+        domain-layer:
+          files:
+            - "**/internal/domain/**/*.go"
+            - "**/internal/domain/*.go"
+          deny:
+            - pkg: "github.com/gin-gonic/gin"
+              desc: "Domain layer must stay framework-agnostic"
+            - pkg: "net/http"
+              desc: "Domain layer must stay transport-agnostic"
+            - pkg: "entgo.io/ent"
+              desc: "Domain layer must not depend on ent ORM"
+            - pkg: "database/sql"
+              desc: "Domain layer must not depend on database/sql"
     govet:
       enable-all: true
       disable:

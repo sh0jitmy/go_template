@@ -8,7 +8,8 @@
 ## AIエージェント（Claude Code）への指示
 
 > [!IMPORTANT]
-> - **スキルの厳格な適用**: 本プロジェクトにおけるコードの実装、設計、リファクタリング、およびコードレビューを行う際は、必ず `.claude/skills/` にある各スキル（`golang-implementation`、`golang-htmx-frontend`、`golang-sqlite-governance`、`multi-tier-e2e-testing`、`observability-stack` 等）の指針に準拠してください。
+> - **スキルの厳格な適用**: 本プロジェクトにおけるコードの実装、設計、リファクタリング、およびコードレビューを行う際は、必ず `.claude/skills/` にある各スキル（`golang-implementation`、`golang-lint-governance`、`golang-modernize`、`architecture-fitness`、`docs-sync`、`golang-htmx-frontend`、`golang-sqlite-governance`、`multi-tier-e2e-testing`、`observability-stack` 等）の指針に準拠してください。
+> - **ドキュメントの常時同期 (`docs-sync`)**: コード・設定・Makefile・API・スキル等を変更した際は、タスク完了前に必ず `docs-sync` スキルに従って変更差分と関連ドキュメント（`README.md`, `docs/architecture.md`, `REQUIREMENTS.md`, `AGENTS.md`, `CLAUDE.md` 等）の乖離を確認・同期してください。
 > - **言語の統一**: コミットメッセージは**英語**、それ以外のPR説明、Issue、およびAIによるレビューレポートは**完全な日本語**で記述してください。
 > - **ライセンスヘッダーの維持**: 新規追加した Go ソースコードには必ず Apache-2.0 ライセンスヘッダーを付与し、`make license-check` をパスさせてください。
 

@@ -17,7 +17,7 @@ This document provides behavioral constraints, architectural conventions, and ex
 
 1. **Custom Skills First**:
    - Relevant skills are located in `.agents/skills/` and `.claude/skills/`.
-   - Adhere to `golang-htmx-frontend`, `golang-sqlite-governance`, `multi-tier-e2e-testing`, `observability-stack`, `dewy-deployment`, `github-pages-e2e-report`, `documentation-governance`, and `golang-lint-governance` for architecture and implementation decisions.
+   - Adhere to `golang-htmx-frontend`, `golang-sqlite-governance`, `multi-tier-e2e-testing`, `observability-stack`, `dewy-deployment`, `github-pages-e2e-report`, `documentation-governance`, `docs-sync`, `golang-lint-governance`, `golang-modernize`, `golang-performance`, `golang-security-supplychain`, `golang-concurrency-patterns`, `architecture-fitness`, `resilience-and-event-patterns`, and `architecture-decision-review` for architecture and implementation decisions.
 2. **License Header Integrity**:
    - Every Go source file must contain the standard Apache-2.0 and Author header.
    - Always verify with `make license-check` before concluding tasks.
@@ -28,6 +28,8 @@ This document provides behavioral constraints, architectural conventions, and ex
    - In Go unit/integration tests (`internal/...`), isolate SQLite memory databases using distinct connection names (`fmt.Sprintf("file:%s?mode=memory&cache=shared", t.Name())`) to ensure parallel safety.
 5. **Requirements Compliance**:
    - After updating features or configurations, execute `make self-eval` and ensure 100% compliance in `REQUIREMENTS.md`.
+6. **Continuous Documentation Sync (`docs-sync`)**:
+   - Before concluding any code, configuration, Makefile, CI, API, schema, or skill change, inspect `git status -s` / `git diff --name-only` and synchronize all affected docs (`README.md`, `docs/architecture.md`, `AGENTS.md`, `CLAUDE.md`, `REQUIREMENTS.md`, issue templates, etc.) following the `docs-sync` skill so documentation never drifts from implementation.
 
 ---
 
