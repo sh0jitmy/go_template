@@ -6,7 +6,7 @@
 ## 📋 要件チェックリスト
 
 ### 1. プロジェクト初期セットアップ
-- [x] **R-1.1 モジュール名のカスタマイズ**: `go.mod` 内のモジュール名を自身のGitHubリポジトリ名に変更し、サポートするGoのバージョン（最新Go 1.26およびその直前1.25以上）が正しく指定されていること。
+- [x] **R-1.1 モジュール名のカスタマイズ**: `go.mod` 内のモジュール名を自身のGitHubリポジトリ名に変更し、サポートするGoのバージョン（最新Go 1.27およびその直前1.26以上）が正しく指定されていること。
 - [x] **R-1.2 GitHub Actions 権限設定**: `tagpr` や `goreleaser` が動作するように、GitHubリポジトリの `Settings > Actions > General > Workflow permissions` で 「Read and write permissions」が許可されていること。
 
 ### 2. 品質・セキュリティ基準
@@ -34,7 +34,7 @@
 - [x] **R-3.4 データ保持期間自動パージ (Retention Cleaner)**: 保持期間を超過した古いバックアップファイルおよび時系列レコードを自動パージする機能が実装され、API およびテストで検証されていること。
 - [x] **R-3.5 多層 E2E テストフレームワーク**: `make sqlite-e2e`（No-Docker高速E2E）、`make frontend-e2e`（Headless Chrome UI検証＆スナップショット＆HTMLレポート）、`make docker-e2e`（Dockerフルスタック＆Grafana検証）の多層テストが整備されていること。
 - [x] **R-3.6 統合可観測性スタック (VictoriaMetrics + Grafana)**: Docker Compose 環境下で VictoriaMetrics による軽量スクレイピングと Grafana ダッシュボード自動プロビジョニングが整備されていること。
-- [x] **R-3.7 AI カスタムスキル体系の整備 (Claude & Antigravity 両対応)**: 30種類の専門スキルが `.claude/skills/` および `.agents/skills/` に配備され、`make check` により構文検証をパスすること。
+- [x] **R-3.7 AI カスタムスキル体系の整備 (Claude & Antigravity 両対応)**: 38種類の専門スキルが `.claude/skills/` および `.agents/skills/` に配備され、`make check` により構文検証をパスすること。
 - [x] **R-3.8 リリース管理＆Go バージョン SSOT**: `go-version-file: 'go.mod'` により Go バージョンを `go.mod` に一元管理し、`internal/version/version.go` から GoReleaser v2 `-ldflags` によるメタデータ埋め込みが実装されていること。
 - [x] **R-3.9 E2E テスト HTML レポート自動生成＆GitHub Pages デプロイ**: `scripts/generate_e2e_report.py` / `scripts/e2e_report.sh` による機密サニタイズ付きスタンドアロン HTML レポート生成と GitHub Pages への自動デプロイが整備されていること。
 - [x] **R-3.10 Dewy によるプル型バイナリ自動デプロイツールキット**: S3互換オブジェクトストレージ連携、SOPS/age シークレット管理、systemd / Docker Compose 環境、およびデプロイワークフロー (`deploy.yml`) がテンプレート化されていること。

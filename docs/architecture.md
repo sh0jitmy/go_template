@@ -28,39 +28,42 @@ Author: [YOUR_NAME]
 graph TD
     Client["Browser / HTMX Client"]
     APIClient["API Client / Third-party"]
-    
+
     subgraph "Application Stack"
-        WebSrv["cmd/web or cmd/app web<br/>(Standalone HTMX UI Server)"]
-        CoreSrv["cmd/app server<br/>(Secure REST API Server)"]
-        
-        subgraph "Internal Packages"
-            WebPkg["internal/web<br/>- HTMX Handlers<br/>- SSG Engine<br/>- Embedded Assets"]
-            DBPkg["internal/database<br/>- ent ORM Client<br/>- Backup & Restore<br/>- Retention Cleaner"]
-            VerPkg["internal/version<br/>- Version, Commit, Date"]
+        WebSrv["cmd/web or cmd/app web (Standalone HTMX UI Server)"]
+        CoreSrv["cmd/app server (Secure REST API Server)"]
+
+        subgraph "Internal Packages (depguard enforced)"
+            WebPkg["internal/web (HTMX Handlers, API Handlers, SSG Engine, Embedded Assets)"]
+            SvcPkg["internal/service (Auth & Business Logic)"]
+            DBPkg["internal/database (ent ORM Client, Backup & Restore, Retention Cleaner)"]
+            VerPkg["internal/version (Version, Commit, Date)"]
         end
     end
-    
+
     subgraph "Persistence Layer"
         SQLite["SQLite (CGO-free WAL)"]
         Postgres["PostgreSQL (Production)"]
-        Backups["Backup Archives (*.tar.gz)<br/>(SHA256 Manifest Verified)"]
+        Backups["Backup Archives (*.tar.gz, SHA256 Manifest Verified)"]
     end
-    
+
     subgraph "Observability Layer"
         VM["VictoriaMetrics (TSDB)"]
         Grafana["Grafana Dashboard"]
     end
-    
+
     Client -->|HTTP / HTMX Polling| WebSrv
     APIClient -->|REST API / Bearer Auth| CoreSrv
     WebSrv --> WebPkg
     CoreSrv --> DBPkg
     CoreSrv --> WebPkg
-    
+    WebPkg --> SvcPkg
+    WebPkg --> DBPkg
+
     DBPkg -->|Reads / Writes| SQLite
     DBPkg -->|Reads / Writes| Postgres
     DBPkg -->|VACUUM & Export| Backups
-    
+
     VM -->|Scrape /metrics| CoreSrv
     Grafana -->|PromQL Query| VM
     Grafana -->|Direct SQL Query| Postgres
@@ -103,7 +106,13 @@ graph TD
 - **VictoriaMetrics & Prometheus**:
   - OpenTelemetry メトリクスおよび標準 Go ランタイムメトリクスを 5 秒間隔で収集。
 - **Grafana 自動プロビジョニング**:
-  - データソース (`deploy/grafana/datasources.yaml`) とダッシュボード (`deploy/grafana/dashboards/overview.json`) をマウントするだけで即時起動。
+  - データソース (`deploy/grafana/provisioning/datasources/datasources.yaml`) とダッシュボード (`deploy/grafana/provisioning/dashboards/dashboards.yaml`, `deploy/grafana/dashboards/overview.json`) をマウントするだけで即時起動。
+
+### 2.5 ビジネスロジック層 (`internal/service`) と静的依存境界 (`depguard`)
+- **`internal/service`**:
+  - ユーザー認証や業務ロジックを HTTP トランスポート層（`gin`, `net/http`, `internal/web`）および DB 接続初期化層（`internal/database`）から分離して実装。
+- **静的依存境界強制 (`.golangci.yml` `depguard`)**:
+  - `make lint` 実行時に `internal/service`・`internal/database`・`internal/domain` 間の禁止依存や非推奨パッケージ（`io/ioutil`, `github.com/pkg/errors`）の混入を自動検知・阻止。
 
 ---
 
@@ -112,17 +121,17 @@ graph TD
 ```mermaid
 graph LR
     subgraph "Layer 1"
-        L1["Unit & Integration<br/><code>make test</code><br/>- Isolated In-memory DB<br/>- Coverage > 80%<br/>- goleak check"]
+        L1["Unit & Integration (make test: In-memory DB, Coverage >= 80%, goleak)"]
     end
     subgraph "Layer 2"
-        L2["Standalone SQLite E2E<br/><code>make sqlite-e2e</code><br/>- No Docker<br/>- Auth & Backup / Restore<br/>- < 3 sec execution"]
+        L2["Standalone SQLite E2E (make sqlite-e2e: No Docker, Auth & Backup/Restore)"]
     end
     subgraph "Layer 3"
-        L3["HTMX Frontend E2E<br/><code>make frontend-e2e</code><br/>- Headless Chrome Snapshot<br/>- HTMX Swaps & Cards<br/>- HTML Report Generated"]
+        L3["HTMX Frontend E2E (make frontend-e2e: Headless Chrome, Snapshots, HTML Report)"]
     end
     subgraph "Layer 4"
-        L4["Docker Compose E2E<br/><code>make docker-e2e</code><br/>- Multi-container Stack<br/>- PostgreSQL + VictoriaMetrics<br/>- Grafana UI & Metric Assertions"]
+        L4["Docker Compose E2E (make docker-e2e: PostgreSQL, VictoriaMetrics, Grafana)"]
     end
-    
+
     L1 --> L2 --> L3 --> L4
 ```

@@ -17,8 +17,8 @@
 // Package main is the entry point of the Go template application.
 // It initializes dependencies and runs the HTTP/HTTPS API server.
 //
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.7.1 --config=../../api/oapi-codegen.cfg.yaml -o ../../ogen/api.gen.go ../../api/openapi.yaml
-//go:generate go run -mod=mod entgo.io/ent/cmd/ent@v0.14.6 generate ../../ent/schema
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.9.0 --config=../../api/oapi-codegen.cfg.yaml -o ../../ogen/api.gen.go ../../api/openapi.yaml
+//go:generate go run -mod=mod entgo.io/ent/cmd/ent generate ../../ent/schema
 package main
 
 import (
